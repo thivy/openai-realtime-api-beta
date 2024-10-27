@@ -1,197 +1,249 @@
-import { RealtimeEventHandler } from './event_handler.js';
-import { RealtimeAPI } from './api.js';
-import { RealtimeConversation } from './conversation.js';
-import { RealtimeUtils } from './utils.js';
+import { RealtimeEventHandler } from './event_handler.ts';
+import { RealtimeAPI } from './api.ts';
+import { RealtimeConversation } from './conversation.ts';
+import { RealtimeUtils } from './utils.ts';
 
 /**
  * Valid audio formats
- * @typedef {"pcm16"|"g711_ulaw"|"g711_alaw"} AudioFormatType
  */
+type AudioFormatType = "pcm16" | "g711_ulaw" | "g711_alaw";
 
 /**
- * @typedef {Object} AudioTranscriptionType
- * @property {"whisper-1"} model
+ * Audio transcription type
  */
+interface AudioTranscriptionType {
+  model: "whisper-1";
+}
 
 /**
- * @typedef {Object} TurnDetectionServerVadType
- * @property {"server_vad"} type
- * @property {number} [threshold]
- * @property {number} [prefix_padding_ms]
- * @property {number} [silence_duration_ms]
+ * Turn detection server VAD type
  */
+interface TurnDetectionServerVadType {
+  type: "server_vad";
+  threshold?: number;
+  prefix_padding_ms?: number;
+  silence_duration_ms?: number;
+}
 
 /**
  * Tool definitions
- * @typedef {Object} ToolDefinitionType
- * @property {"function"} [type]
- * @property {string} name
- * @property {string} description
- * @property {{[key: string]: any}} parameters
  */
+interface ToolDefinitionType {
+  type?: "function";
+  name: string;
+  description: string;
+  parameters: { [key: string]: any };
+}
 
 /**
- * @typedef {Object} SessionResourceType
- * @property {string} [model]
- * @property {string[]} [modalities]
- * @property {string} [instructions]
- * @property {"alloy"|"shimmer"|"echo"} [voice]
- * @property {AudioFormatType} [input_audio_format]
- * @property {AudioFormatType} [output_audio_format]
- * @property {AudioTranscriptionType|null} [input_audio_transcription]
- * @property {TurnDetectionServerVadType|null} [turn_detection]
- * @property {ToolDefinitionType[]} [tools]
- * @property {"auto"|"none"|"required"|{type:"function",name:string}} [tool_choice]
- * @property {number} [temperature]
- * @property {number|"inf"} [max_response_output_tokens]
+ * Session resource type
  */
+interface SessionResourceType {
+  model?: string;
+  modalities?: string[];
+  instructions?: string;
+  voice?: "alloy" | "shimmer" | "echo";
+  input_audio_format?: AudioFormatType;
+  output_audio_format?: AudioFormatType;
+  input_audio_transcription?: AudioTranscriptionType | null;
+  turn_detection?: TurnDetectionServerVadType | null;
+  tools?: ToolDefinitionType[];
+  tool_choice?: "auto" | "none" | "required" | { type: "function"; name: string };
+  temperature?: number;
+  max_response_output_tokens?: number | "inf";
+}
 
 /**
- * @typedef {"in_progress"|"completed"|"incomplete"} ItemStatusType
+ * Item status type
  */
+type ItemStatusType = "in_progress" | "completed" | "incomplete";
 
 /**
- * @typedef {Object} InputTextContentType
- * @property {"input_text"} type
- * @property {string} text
+ * Input text content type
  */
+interface InputTextContentType {
+  type: "input_text";
+  text: string;
+}
 
 /**
- * @typedef {Object} InputAudioContentType
- * @property {"input_audio"} type
- * @property {string} [audio] base64-encoded audio data
- * @property {string|null} [transcript]
+ * Input audio content type
  */
+interface InputAudioContentType {
+  type: "input_audio";
+  audio?: string; // base64-encoded audio data
+  transcript?: string | null;
+}
 
 /**
- * @typedef {Object} TextContentType
- * @property {"text"} type
- * @property {string} text
+ * Text content type
  */
+interface TextContentType {
+  type: "text";
+  text: string;
+}
 
 /**
- * @typedef {Object} AudioContentType
- * @property {"audio"} type
- * @property {string} [audio] base64-encoded audio data
- * @property {string|null} [transcript]
+ * Audio content type
  */
+interface AudioContentType {
+  type: "audio";
+  audio?: string; // base64-encoded audio data
+  transcript?: string | null;
+}
 
 /**
- * @typedef {Object} SystemItemType
- * @property {string|null} [previous_item_id]
- * @property {"message"} type
- * @property {ItemStatusType} status
- * @property {"system"} role
- * @property {Array<InputTextContentType>} content
+ * System item type
  */
+interface SystemItemType {
+  previous_item_id?: string | null;
+  type: "message";
+  status: ItemStatusType;
+  role: "system";
+  content: InputTextContentType[];
+}
 
 /**
- * @typedef {Object} UserItemType
- * @property {string|null} [previous_item_id]
- * @property {"message"} type
- * @property {ItemStatusType} status
- * @property {"user"} role
- * @property {Array<InputTextContentType|InputAudioContentType>} content
+ * User item type
  */
+interface UserItemType {
+  previous_item_id?: string | null;
+  type: "message";
+  status: ItemStatusType;
+  role: "user";
+  content: (InputTextContentType | InputAudioContentType)[];
+}
 
 /**
- * @typedef {Object} AssistantItemType
- * @property {string|null} [previous_item_id]
- * @property {"message"} type
- * @property {ItemStatusType} status
- * @property {"assistant"} role
- * @property {Array<TextContentType|AudioContentType>} content
+ * Assistant item type
  */
+interface AssistantItemType {
+  previous_item_id?: string | null;
+  type: "message";
+  status: ItemStatusType;
+  role: "assistant";
+  content: (TextContentType | AudioContentType)[];
+}
 
 /**
- * @typedef {Object} FunctionCallItemType
- * @property {string|null} [previous_item_id]
- * @property {"function_call"} type
- * @property {ItemStatusType} status
- * @property {string} call_id
- * @property {string} name
- * @property {string} arguments
+ * Function call item type
  */
+interface FunctionCallItemType {
+  previous_item_id?: string | null;
+  type: "function_call";
+  status: ItemStatusType;
+  call_id: string;
+  name: string;
+  arguments: string;
+}
 
 /**
- * @typedef {Object} FunctionCallOutputItemType
- * @property {string|null} [previous_item_id]
- * @property {"function_call_output"} type
- * @property {string} call_id
- * @property {string} output
+ * Function call output item type
  */
+interface FunctionCallOutputItemType {
+  previous_item_id?: string | null;
+  type: "function_call_output";
+  call_id: string;
+  output: string;
+}
 
 /**
- * @typedef {Object} FormattedToolType
- * @property {"function"} type
- * @property {string} name
- * @property {string} call_id
- * @property {string} arguments
+ * Formatted tool type
  */
+interface FormattedToolType {
+  type: "function";
+  name: string;
+  call_id: string;
+  arguments: string;
+}
 
 /**
- * @typedef {Object} FormattedPropertyType
- * @property {Int16Array} [audio]
- * @property {string} [text]
- * @property {string} [transcript]
- * @property {FormattedToolType} [tool]
- * @property {string} [output]
- * @property {any} [file]
+ * Formatted property type
  */
+interface FormattedPropertyType {
+  audio?: Int16Array;
+  text?: string;
+  transcript?: string;
+  tool?: FormattedToolType;
+  output?: string;
+  file?: any;
+}
 
 /**
- * @typedef {Object} FormattedItemType
- * @property {string} id
- * @property {string} object
- * @property {"user"|"assistant"|"system"} [role]
- * @property {FormattedPropertyType} formatted
+ * Formatted item type
  */
+interface FormattedItemType {
+  id: string;
+  object: string;
+  role?: "user" | "assistant" | "system";
+  formatted: FormattedPropertyType;
+}
 
 /**
- * @typedef {SystemItemType|UserItemType|AssistantItemType|FunctionCallItemType|FunctionCallOutputItemType} BaseItemType
+ * Base item type
  */
+type BaseItemType = SystemItemType | UserItemType | AssistantItemType | FunctionCallItemType | FunctionCallOutputItemType;
 
 /**
- * @typedef {FormattedItemType & BaseItemType} ItemType
+ * Item type
  */
+type ItemType = FormattedItemType & BaseItemType;
 
 /**
- * @typedef {Object} IncompleteResponseStatusType
- * @property {"incomplete"} type
- * @property {"interruption"|"max_output_tokens"|"content_filter"} reason
+ * Incomplete response status type
  */
+interface IncompleteResponseStatusType {
+  type: "incomplete";
+  reason: "interruption" | "max_output_tokens" | "content_filter";
+}
 
 /**
- * @typedef {Object} FailedResponseStatusType
- * @property {"failed"} type
- * @property {{code: string, message: string}|null} error
+ * Failed response status type
  */
+interface FailedResponseStatusType {
+  type: "failed";
+  error: { code: string; message: string } | null;
+}
 
 /**
- * @typedef {Object} UsageType
- * @property {number} total_tokens
- * @property {number} input_tokens
- * @property {number} output_tokens
+ * Usage type
  */
+interface UsageType {
+  total_tokens: number;
+  input_tokens: number;
+  output_tokens: number;
+}
 
 /**
- * @typedef {Object} ResponseResourceType
- * @property {"in_progress"|"completed"|"incomplete"|"cancelled"|"failed"} status
- * @property {IncompleteResponseStatusType|FailedResponseStatusType|null} status_details
- * @property {ItemType[]} output
- * @property {UsageType|null} usage
+ * Response resource type
  */
+interface ResponseResourceType {
+  status: "in_progress" | "completed" | "incomplete" | "cancelled" | "failed";
+  status_details: IncompleteResponseStatusType | FailedResponseStatusType | null;
+  output: ItemType[];
+  usage: UsageType | null;
+}
 
 /**
  * RealtimeClient Class
  * @class
  */
 export class RealtimeClient extends RealtimeEventHandler {
+  defaultSessionConfig: SessionResourceType;
+  sessionConfig: SessionResourceType;
+  transcriptionModels: AudioTranscriptionType[];
+  defaultServerVadConfig: TurnDetectionServerVadType;
+  realtime: RealtimeAPI;
+  conversation: RealtimeConversation;
+  sessionCreated: boolean;
+  tools: { [key: string]: { definition: ToolDefinitionType; handler: Function } };
+  inputAudioBuffer: Int16Array;
+
   /**
    * Create a new RealtimeClient instance
    * @param {{url?: string, apiKey?: string, dangerouslyAllowAPIKeyInBrowser?: boolean, debug?: boolean}} [settings]
    */
-  constructor({ url, apiKey, dangerouslyAllowAPIKeyInBrowser, debug } = {}) {
+  constructor({ url, apiKey, dangerouslyAllowAPIKeyInBrowser, debug }: { url?: string; apiKey?: string; dangerouslyAllowAPIKeyInBrowser?: boolean; debug?: boolean } = {}) {
     super();
     this.defaultSessionConfig = {
       modalities: ['text', 'audio'],
@@ -234,7 +286,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @private
    * @returns {true}
    */
-  _resetConfig() {
+  _resetConfig(): true {
     this.sessionCreated = false;
     this.tools = {};
     this.sessionConfig = JSON.parse(JSON.stringify(this.defaultSessionConfig));
@@ -247,7 +299,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @private
    * @returns {true}
    */
-  _addAPIEventHandlers() {
+  _addAPIEventHandlers(): true {
     // Event Logging handlers
     this.realtime.on('client.*', (event) => {
       const realtimeEvent = {
@@ -273,11 +325,11 @@ export class RealtimeClient extends RealtimeEventHandler {
     );
 
     // Setup for application control flow
-    const handler = (event, ...args) => {
+    const handler = (event: any, ...args: any[]) => {
       const { item, delta } = this.conversation.processEvent(event, ...args);
       return { item, delta };
     };
-    const handlerWithDispatch = (event, ...args) => {
+    const handlerWithDispatch = (event: any, ...args: any[]) => {
       const { item, delta } = handler(event, ...args);
       if (item) {
         // FIXME: If statement is only here because item.input_audio_transcription.completed
@@ -287,7 +339,7 @@ export class RealtimeClient extends RealtimeEventHandler {
       }
       return { item, delta };
     };
-    const callTool = async (tool) => {
+    const callTool = async (tool: FormattedToolType) => {
       try {
         const jsonArguments = JSON.parse(tool.arguments);
         const toolConfig = this.tools[tool.name];
@@ -367,7 +419,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Tells us whether the realtime socket is connected and the session has started
    * @returns {boolean}
    */
-  isConnected() {
+  isConnected(): boolean {
     return this.realtime.isConnected();
   }
 
@@ -375,7 +427,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Resets the client instance entirely: disconnects and clears active config
    * @returns {true}
    */
-  reset() {
+  reset(): true {
     this.disconnect();
     this.clearEventHandlers();
     this.realtime.clearEventHandlers();
@@ -389,7 +441,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Updates session config and conversation config
    * @returns {Promise<true>}
    */
-  async connect() {
+  async connect(): Promise<true> {
     if (this.isConnected()) {
       throw new Error(`Already connected, use .disconnect() first`);
     }
@@ -402,7 +454,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Waits for a session.created event to be executed before proceeding
    * @returns {Promise<true>}
    */
-  async waitForSessionCreated() {
+  async waitForSessionCreated(): Promise<true> {
     if (!this.isConnected()) {
       throw new Error(`Not connected, use .connect() first`);
     }
@@ -415,7 +467,7 @@ export class RealtimeClient extends RealtimeEventHandler {
   /**
    * Disconnects from the Realtime API and clears the conversation history
    */
-  disconnect() {
+  disconnect(): void {
     this.sessionCreated = false;
     this.realtime.isConnected() && this.realtime.disconnect();
     this.conversation.clear();
@@ -425,7 +477,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Gets the active turn detection mode
    * @returns {"server_vad"|null}
    */
-  getTurnDetectionType() {
+  getTurnDetectionType(): "server_vad" | null {
     return this.sessionConfig.turn_detection?.type || null;
   }
 
@@ -435,7 +487,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @param {function} handler
    * @returns {{definition: ToolDefinitionType, handler: function}}
    */
-  addTool(definition, handler) {
+  addTool(definition: ToolDefinitionType, handler: Function): { definition: ToolDefinitionType; handler: Function } {
     if (!definition?.name) {
       throw new Error(`Missing tool name in definition`);
     }
@@ -458,7 +510,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @param {string} name
    * @returns {true}
    */
-  removeTool(name) {
+  removeTool(name: string): true {
     if (!this.tools[name]) {
       throw new Error(`Tool "${name}" does not exist, can not be removed.`);
     }
@@ -471,7 +523,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @param {string} id
    * @returns {true}
    */
-  deleteItem(id) {
+  deleteItem(id: string): true {
     this.realtime.send('conversation.item.delete', { item_id: id });
     return true;
   }
@@ -493,7 +545,7 @@ export class RealtimeClient extends RealtimeEventHandler {
     tool_choice = void 0,
     temperature = void 0,
     max_response_output_tokens = void 0,
-  } = {}) {
+  }: SessionResourceType = {}): true {
     modalities !== void 0 && (this.sessionConfig.modalities = modalities);
     instructions !== void 0 && (this.sessionConfig.instructions = instructions);
     voice !== void 0 && (this.sessionConfig.voice = voice);
@@ -546,7 +598,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @param {Array<InputTextContentType|InputAudioContentType>} content
    * @returns {true}
    */
-  sendUserMessageContent(content = []) {
+  sendUserMessageContent(content: (InputTextContentType | InputAudioContentType)[] = []): true {
     if (content.length) {
       for (const c of content) {
         if (c.type === 'input_audio') {
@@ -572,7 +624,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @param {Int16Array|ArrayBuffer} arrayBuffer
    * @returns {true}
    */
-  appendInputAudio(arrayBuffer) {
+  appendInputAudio(arrayBuffer: Int16Array | ArrayBuffer): true {
     if (arrayBuffer.byteLength > 0) {
       this.realtime.send('input_audio_buffer.append', {
         audio: RealtimeUtils.arrayBufferToBase64(arrayBuffer),
@@ -589,7 +641,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Forces a model response generation
    * @returns {true}
    */
-  createResponse() {
+  createResponse(): true {
     if (
       this.getTurnDetectionType() === null &&
       this.inputAudioBuffer.byteLength > 0
@@ -609,7 +661,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * @param {number} [sampleCount] The number of samples to truncate past for the ongoing generation
    * @returns {{item: (AssistantItemType | null)}}
    */
-  cancelResponse(id, sampleCount = 0) {
+  cancelResponse(id: string, sampleCount: number = 0): { item: AssistantItemType | null } {
     if (!id) {
       this.realtime.send('response.cancel');
       return { item: null };
@@ -645,7 +697,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Utility for waiting for the next `conversation.item.appended` event to be triggered by the server
    * @returns {Promise<{item: ItemType}>}
    */
-  async waitForNextItem() {
+  async waitForNextItem(): Promise<{ item: ItemType }> {
     const event = await this.waitForNext('conversation.item.appended');
     const { item } = event;
     return { item };
@@ -655,7 +707,7 @@ export class RealtimeClient extends RealtimeEventHandler {
    * Utility for waiting for the next `conversation.item.completed` event to be triggered by the server
    * @returns {Promise<{item: ItemType}>}
    */
-  async waitForNextCompletedItem() {
+  async waitForNextCompletedItem(): Promise<{ item: ItemType }> {
     const event = await this.waitForNext('conversation.item.completed');
     const { item } = event;
     return { item };
