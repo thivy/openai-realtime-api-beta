@@ -3,7 +3,7 @@
  * @typedef {(event: {[key: string]: any}): void} EventHandlerCallbackType
  */
 
-const sleep = (t) => new Promise((r) => setTimeout(() => r(), t));
+const sleep = (t: number) => new Promise((r) => setTimeout(() => r(), t));
 
 /**
  * Inherited class for RealtimeAPI and RealtimeClient
@@ -11,6 +11,9 @@ const sleep = (t) => new Promise((r) => setTimeout(() => r(), t));
  * @class
  */
 export class RealtimeEventHandler {
+  eventHandlers: { [key: string]: EventHandlerCallbackType[] };
+  nextEventHandlers: { [key: string]: EventHandlerCallbackType[] };
+
   /**
    * Create a new RealtimeEventHandler instance
    * @returns {RealtimeEventHandler}
@@ -24,7 +27,7 @@ export class RealtimeEventHandler {
    * Clears all event handlers
    * @returns {true}
    */
-  clearEventHandlers() {
+  clearEventHandlers(): true {
     this.eventHandlers = {};
     this.nextEventHandlers = {};
     return true;
@@ -36,7 +39,7 @@ export class RealtimeEventHandler {
    * @param {EventHandlerCallbackType} callback Code to execute on event
    * @returns {EventHandlerCallbackType}
    */
-  on(eventName, callback) {
+  on(eventName: string, callback: EventHandlerCallbackType): EventHandlerCallbackType {
     this.eventHandlers[eventName] = this.eventHandlers[eventName] || [];
     this.eventHandlers[eventName].push(callback);
     return callback;
@@ -48,7 +51,7 @@ export class RealtimeEventHandler {
    * @param {EventHandlerCallbackType} callback Code to execute on event
    * @returns {EventHandlerCallbackType}
    */
-  onNext(eventName, callback) {
+  onNext(eventName: string, callback: EventHandlerCallbackType): EventHandlerCallbackType {
     this.nextEventHandlers[eventName] = this.nextEventHandlers[eventName] || [];
     this.nextEventHandlers[eventName].push(callback);
     return callback;
@@ -61,7 +64,7 @@ export class RealtimeEventHandler {
    * @param {EventHandlerCallbackType} [callback]
    * @returns {true}
    */
-  off(eventName, callback) {
+  off(eventName: string, callback?: EventHandlerCallbackType): true {
     const handlers = this.eventHandlers[eventName] || [];
     if (callback) {
       const index = handlers.indexOf(callback);
@@ -84,7 +87,7 @@ export class RealtimeEventHandler {
    * @param {EventHandlerCallbackType} [callback]
    * @returns {true}
    */
-  offNext(eventName, callback) {
+  offNext(eventName: string, callback?: EventHandlerCallbackType): true {
     const nextHandlers = this.nextEventHandlers[eventName] || [];
     if (callback) {
       const index = nextHandlers.indexOf(callback);
@@ -106,9 +109,9 @@ export class RealtimeEventHandler {
    * @param {number|null} [timeout]
    * @returns {Promise<{[key: string]: any}|null>}
    */
-  async waitForNext(eventName, timeout = null) {
+  async waitForNext(eventName: string, timeout: number | null = null): Promise<{[key: string]: any} | null> {
     const t0 = Date.now();
-    let nextEvent;
+    let nextEvent: {[key: string]: any} | null;
     this.onNext(eventName, (event) => (nextEvent = event));
     while (!nextEvent) {
       if (timeout) {
@@ -128,7 +131,7 @@ export class RealtimeEventHandler {
    * @param {any} event
    * @returns {true}
    */
-  dispatch(eventName, event) {
+  dispatch(eventName: string, event: any): true {
     const handlers = [].concat(this.eventHandlers[eventName] || []);
     for (const handler of handlers) {
       handler(event);

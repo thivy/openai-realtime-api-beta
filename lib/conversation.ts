@@ -10,15 +10,30 @@ import { RealtimeUtils } from './utils.js';
  * @property {string} [transcript]
  */
 
+interface ItemContentDeltaType {
+  text?: string;
+  audio?: Int16Array;
+  arguments?: string;
+  transcript?: string;
+}
+
 /**
  * RealtimeConversation holds conversation history
  * and performs event validation for RealtimeAPI
  * @class
  */
 export class RealtimeConversation {
-  defaultFrequency = 24_000; // 24,000 Hz
+  defaultFrequency: number = 24_000; // 24,000 Hz
 
-  EventProcessors = {
+  itemLookup: { [key: string]: any } = {};
+  items: any[] = [];
+  responseLookup: { [key: string]: any } = {};
+  responses: any[] = [];
+  queuedSpeechItems: { [key: string]: any } = {};
+  queuedTranscriptItems: { [key: string]: any } = {};
+  queuedInputAudio: Int16Array | null = null;
+
+  EventProcessors: { [key: string]: (event: any, ...args: any[]) => { item: any, delta: ItemContentDeltaType | null } } = {
     'conversation.item.created': (event) => {
       const { item } = event;
       // deep copy values
@@ -38,7 +53,7 @@ export class RealtimeConversation {
       }
       // Populate formatted text if it comes out on creation
       if (newItem.content) {
-        const textContent = newItem.content.filter((c) =>
+        const textContent = newItem.content.filter((c: any) =>
           ['text', 'input_text'].includes(c.type),
         );
         for (const content of textContent) {
@@ -266,7 +281,7 @@ export class RealtimeConversation {
    * @param {Int16Array} inputAudio
    * @returns {Int16Array}
    */
-  queueInputAudio(inputAudio) {
+  queueInputAudio(inputAudio: Int16Array) {
     this.queuedInputAudio = inputAudio;
     return inputAudio;
   }
@@ -275,9 +290,9 @@ export class RealtimeConversation {
    * Process an event from the WebSocket server and compose items
    * @param {Object} event
    * @param  {...any} args
-   * @returns {item: import('./client.js').ItemType | null, delta: ItemContentDeltaType | null}
+   * @returns {item: any | null, delta: ItemContentDeltaType | null}
    */
-  processEvent(event, ...args) {
+  processEvent(event: any, ...args: any[]) {
     if (!event.event_id) {
       console.error(event);
       throw new Error(`Missing "event_id" on event`);
@@ -298,15 +313,15 @@ export class RealtimeConversation {
   /**
    * Retrieves a item by id
    * @param {string} id
-   * @returns {import('./client.js').ItemType}
+   * @returns {any}
    */
-  getItem(id) {
+  getItem(id: string) {
     return this.itemLookup[id] || null;
   }
 
   /**
    * Retrieves all items in the conversation
-   * @returns {import('./client.js').ItemType[]}
+   * @returns {any[]}
    */
   getItems() {
     return this.items.slice();

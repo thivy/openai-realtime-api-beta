@@ -1,5 +1,5 @@
-const atob = globalThis.atob;
-const btoa = globalThis.btoa;
+const atob: (data: string) => string = globalThis.atob;
+const btoa: (data: string) => string = globalThis.btoa;
 
 /**
  * Basic utilities for the RealtimeAPI
@@ -11,7 +11,7 @@ export class RealtimeUtils {
    * @param {Float32Array} float32Array
    * @returns {ArrayBuffer}
    */
-  static floatTo16BitPCM(float32Array) {
+  static floatTo16BitPCM(float32Array: Float32Array): ArrayBuffer {
     const buffer = new ArrayBuffer(float32Array.length * 2);
     const view = new DataView(buffer);
     let offset = 0;
@@ -27,7 +27,7 @@ export class RealtimeUtils {
    * @param {string} base64
    * @returns {ArrayBuffer}
    */
-  static base64ToArrayBuffer(base64) {
+  static base64ToArrayBuffer(base64: string): ArrayBuffer {
     const binaryString = atob(base64);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);
@@ -42,7 +42,7 @@ export class RealtimeUtils {
    * @param {ArrayBuffer|Int16Array|Float32Array} arrayBuffer
    * @returns {string}
    */
-  static arrayBufferToBase64(arrayBuffer) {
+  static arrayBufferToBase64(arrayBuffer: ArrayBuffer | Int16Array | Float32Array): string {
     if (arrayBuffer instanceof Float32Array) {
       arrayBuffer = this.floatTo16BitPCM(arrayBuffer);
     } else if (arrayBuffer instanceof Int16Array) {
@@ -64,7 +64,7 @@ export class RealtimeUtils {
    * @param {ArrayBuffer|Int16Array} right
    * @returns {Int16Array}
    */
-  static mergeInt16Arrays(left, right) {
+  static mergeInt16Arrays(left: ArrayBuffer | Int16Array, right: ArrayBuffer | Int16Array): Int16Array {
     if (left instanceof ArrayBuffer) {
       left = new Int16Array(left);
     }
@@ -90,7 +90,7 @@ export class RealtimeUtils {
    * @param {number} [length]
    * @returns {string}
    */
-  static generateId(prefix, length = 21) {
+  static generateId(prefix: string, length: number = 21): string {
     // base58; non-repeating chars
     const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
     const str = Array(length - prefix.length)

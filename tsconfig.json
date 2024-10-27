@@ -1,11 +1,12 @@
 {
-  "include": ["index.js"],
+  "include": ["index.ts", "lib/**/*.ts"],
   "compilerOptions": {
     "allowJs": true,
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "dist",
     "declarationMap": true,
-    "lib": ["ES2022"]
+    "lib": ["ES2022"],
+    "allowImportingTsExtensions": true
   }
 }
